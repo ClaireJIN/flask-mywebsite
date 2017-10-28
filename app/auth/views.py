@@ -5,7 +5,7 @@ from ..models import User
 from .forms import LoginForm, RegistrationForm, ChangePasswordForm, PasswordResetForm, ChangeEmailForm, PasswordResetRequestForm
 from .. import db
 from ..email import send_email
-
+import base64
 
 @auth.before_app_request
 def before_request():
@@ -30,6 +30,11 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
+        # change my photo failed
+        # if form.email.data == '18844731535@163.com':
+        #     with open("/home/jutta/PycharmProjects/mywebsite/app/auth/1.png", "rb") as imageFile:
+        #         str = base64.b64decode(imageFile.read())
+            # user.avatar_hash = str
         if user is not None and user.verify_password(form.password.data):
             login_user(user, form.remember_me.data)
             return redirect(request.args.get('next') or url_for('main.index'))

@@ -32,6 +32,7 @@ class Role(db.Model):
             'User': (Permission.FOLLOW |
                      Permission.COMMENT |
                      Permission.WRITE_ARTICLES, True),
+            # 'User': (Permission.COMMENT, True),
             'Moderator': (Permission.FOLLOW |
                           Permission.COMMENT |
                           Permission.WRITE_ARTICLES |

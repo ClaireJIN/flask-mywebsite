@@ -18,7 +18,7 @@ db = SQLAlchemy()
 pagedown = PageDown()
 
 def create_app(config_name):
-    app = Flask(__name__)
+    app = Flask(__name__) #registory for the view functions, the URL rules, template configuration
     app.config.from_object(config[config_name])
     config[config_name].init_app(app)
 
@@ -37,6 +37,9 @@ def create_app(config_name):
 
     from .api_1_0 import api as api_1_0_blueprint
     app.register_blueprint(api_1_0_blueprint, url_prefix='/api/v1.0')
+
+    # from .post import post as post_blueprint
+    # app.register_blueprint(post_blueprint, url_prefix='/post')
 
     return app
 

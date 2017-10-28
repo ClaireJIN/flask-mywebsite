@@ -1,6 +1,6 @@
 from . import main
 from ..models import User, Role, Post, Permission, Comment
-from .forms import EditProfileForm, EditProfileAdminForm, PostForm, CommentForm
+from .forms import EditProfileForm, EditProfileAdminForm, PostForm, CommentForm, MainForm
 from flask import abort, render_template, flash, redirect, url_for, request, make_response
 from ..decorators import admin_required, permission_required
 from flask_login import current_user, current_app, login_required
@@ -10,21 +10,47 @@ from datetime import datetime
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
+    # form = PostForm()
+    # if current_user.can(Permission.WRITE_ARTICLES) and form.validate_on_submit():
+    #     post = Post(body=form.body.data, author=current_user._get_current_object())
+    #     db.session.add(post)
+    #     return redirect(url_for('.index'))
+    form = MainForm()
+
+    # show_followed = False
+    # if current_user.is_authenticated:
+    #     show_followed = bool(request.cookies.get('show_followed', ''))
+    # if show_followed:
+    #     query = current_user.followed_posts
+    # else:
+    #     query = Post.query
+    page = request.args.get('page', 1, type=int)
+    pagination = Post.query.order_by(Post.timestamp.desc()).paginate(
+        page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
+        error_out=False
+    )
+    # posts = Post.query.order_by(Post.timestamp.desc()).all()
+    posts = pagination.items
+    return render_template('index.html', form=form, posts=posts, current_time=datetime.utcnow(),
+                           pagination=pagination, Permission=Permission, show_followed=show_followed)
+
+@main.route('/new-post', methods=['GET', 'POST'])
+def new_post():
     form = PostForm()
     if current_user.can(Permission.WRITE_ARTICLES) and form.validate_on_submit():
         post = Post(body=form.body.data, author=current_user._get_current_object())
         db.session.add(post)
         return redirect(url_for('.index'))
 
-    show_followed = False
-    if current_user.is_authenticated:
-        show_followed = bool(request.cookies.get('show_followed', ''))
-    if show_followed:
-        query = current_user.followed_posts
-    else:
-        query = Post.query
+    # show_followed = False
+    # if current_user.is_authenticated:
+    #     show_followed = bool(request.cookies.get('show_followed', ''))
+    # if show_followed:
+    #     query = current_user.followed_posts
+    # else:
+    #     query = Post.query
     page = request.args.get('page', 1, type=int)
-    pagination = query.order_by(Post.timestamp.desc()).paginate(
+    pagination = Post.query.order_by(Post.timestamp.desc()).paginate(
         page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
         error_out=False
     )
@@ -90,6 +116,8 @@ def edit_profile_admin(id):
     form.role.data = user.role_id
     form.name.data = user.name
     form.about_me.data = user.about_me
+
+
     return render_template('edit_profile_admin.html', form=form, user=user)
 
 
@@ -111,10 +139,39 @@ def edit(id):
     if form.validate_on_submit():
         post.body = form.body.data
         db.session.add(post)
+        db.session.commit()
         flash('The post has been updated')
         return redirect(url_for('.post', id=post.id))
     form.body.data = post.body
     return render_template('edit_post.html', form=form)
+
+
+@main.route('/<int:id>', methods=['GET', 'POST'])
+def delete(id):
+    post = Post.query.get_or_404(id)
+    if current_user != post.author and \
+            not current_user.can(Permission.ADMINISTER):
+        abort(403)
+    db.session.delete(post)
+    db.session.commit()
+    form = MainForm()
+
+    show_followed = False
+    if current_user.is_authenticated:
+        show_followed = bool(request.cookies.get('show_followed', ''))
+    if show_followed:
+        query = current_user.followed_posts
+    else:
+        query = Post.query.filter_by(author_id=current_user.id)
+    page = request.args.get('page', 1, type=int)
+    pagination = query.order_by(Post.timestamp.desc()).paginate(
+        page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
+        error_out=False
+    )
+    # posts = Post.query.order_by(Post.timestamp.desc()).all()
+    posts = pagination.items
+    return render_template('index.html', form=form, posts=posts, current_time=datetime.utcnow(),
+                           pagination=pagination, Permission=Permission, show_followed=show_followed)
 
 
 @main.route('/follow/<username>')
