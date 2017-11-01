@@ -8,9 +8,9 @@ class Config:
     FLASKY_MAIL_SENDER = 'Flasky Admin <18844731535@163.com>'
     FLASKY_ADMIN = '18844731535@163.com' #os.environ.get('FLASKY_ADMIN')
     SQLALCHEMY_TRACK_MODIFICATIONS = True
-    FLASKY_POSTS_PER_PAGE = 10
+    FLASKY_POSTS_PER_PAGE = 4
     FLASKY_FOLLOWERS_PER_PAGE = 10
-    FLASKY_COMMENTS_PER_PAGE = 5
+    FLASKY_COMMENTS_PER_PAGE = 10
 
     @staticmethod
     def init_app(app):
@@ -24,6 +24,7 @@ class DevelopmentConfig(Config):
     MAIL_PASSWORD = 'jin950103'
     MAIL_USE_SSL = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'data.sqlite')
+    # SQLALCHEMY_DATABASE_URI = "mysql+pymysql://root:pi@localhost:3306/mywebsite"
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     WTF_CSRF_ENABLED = False
 

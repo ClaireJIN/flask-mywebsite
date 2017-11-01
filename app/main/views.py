@@ -17,47 +17,53 @@ def index():
     #     return redirect(url_for('.index'))
     form = MainForm()
 
-    # show_followed = False
-    # if current_user.is_authenticated:
-    #     show_followed = bool(request.cookies.get('show_followed', ''))
-    # if show_followed:
-    #     query = current_user.followed_posts
-    # else:
-    #     query = Post.query
-    page = request.args.get('page', 1, type=int)
-    pagination = Post.query.order_by(Post.timestamp.desc()).paginate(
-        page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
-        error_out=False
-    )
-    # posts = Post.query.order_by(Post.timestamp.desc()).all()
-    posts = pagination.items
-    return render_template('index.html', form=form, posts=posts, current_time=datetime.utcnow(),
-                           pagination=pagination, Permission=Permission, show_followed=show_followed)
+    show_followed = True
+    if current_user.is_authenticated:
+        show_followed = bool(request.cookies.get('show_followed', ''))
+    if show_followed:
+        query = Post.query
+        posts = query.all()
+        return render_template('index.html', form=form, posts=posts, pagination=None,
+                               show_followed=show_followed)
+    else:
+        query = Post.query
+        page = request.args.get('page', 1, type=int)
+        pagination = query.order_by(Post.timestamp.desc()).paginate(
+            page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
+            error_out=False
+        )
+        # posts = Post.query.order_by(Post.timestamp.desc()).all()
+        posts = pagination.items
+        return render_template('index.html', form=form, posts=posts, current_time=datetime.utcnow(),
+                               pagination=pagination, Permission=Permission, show_followed=show_followed)
 
 @main.route('/new-post', methods=['GET', 'POST'])
 def new_post():
     form = PostForm()
     if current_user.can(Permission.WRITE_ARTICLES) and form.validate_on_submit():
-        post = Post(body=form.body.data, author=current_user._get_current_object())
+        post = Post(body=form.body.data, author=current_user._get_current_object(), digest_body=form.digest_body.data)
         db.session.add(post)
         return redirect(url_for('.index'))
 
-    # show_followed = False
-    # if current_user.is_authenticated:
-    #     show_followed = bool(request.cookies.get('show_followed', ''))
-    # if show_followed:
-    #     query = current_user.followed_posts
-    # else:
-    #     query = Post.query
-    page = request.args.get('page', 1, type=int)
-    pagination = Post.query.order_by(Post.timestamp.desc()).paginate(
-        page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
-        error_out=False
-    )
-    # posts = Post.query.order_by(Post.timestamp.desc()).all()
-    posts = pagination.items
-    return render_template('index.html', form=form, posts=posts, current_time=datetime.utcnow(),
-                           pagination=pagination, Permission=Permission, show_followed=show_followed)
+    show_followed = True
+    if current_user.is_authenticated:
+        show_followed = bool(request.cookies.get('show_followed', ''))
+    if show_followed:
+        query = Post.query
+        posts = query.all()
+        return render_template('index.html', form=form, posts=posts, pagination=None,
+                               show_followed=show_followed)
+    else:
+        query = Post.query
+        page = request.args.get('page', 1, type=int)
+        pagination = query.order_by(Post.timestamp.desc()).paginate(
+            page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
+            error_out=False
+        )
+        # posts = Post.query.order_by(Post.timestamp.desc()).all()
+        posts = pagination.items
+        return render_template('index.html', form=form, posts=posts, current_time=datetime.utcnow(),
+                               pagination=pagination, Permission=Permission, show_followed=show_followed)
 
 @main.route('/all')
 @login_required
@@ -138,40 +144,14 @@ def edit(id):
     form = PostForm()
     if form.validate_on_submit():
         post.body = form.body.data
+        post.digest_body = form.digest_body.data
         db.session.add(post)
         db.session.commit()
         flash('The post has been updated')
         return redirect(url_for('.post', id=post.id))
     form.body.data = post.body
+    form.digest_body.data = post.digest_body
     return render_template('edit_post.html', form=form)
-
-
-@main.route('/<int:id>', methods=['GET', 'POST'])
-def delete(id):
-    post = Post.query.get_or_404(id)
-    if current_user != post.author and \
-            not current_user.can(Permission.ADMINISTER):
-        abort(403)
-    db.session.delete(post)
-    db.session.commit()
-    form = MainForm()
-
-    show_followed = False
-    if current_user.is_authenticated:
-        show_followed = bool(request.cookies.get('show_followed', ''))
-    if show_followed:
-        query = current_user.followed_posts
-    else:
-        query = Post.query.filter_by(author_id=current_user.id)
-    page = request.args.get('page', 1, type=int)
-    pagination = query.order_by(Post.timestamp.desc()).paginate(
-        page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
-        error_out=False
-    )
-    # posts = Post.query.order_by(Post.timestamp.desc()).all()
-    posts = pagination.items
-    return render_template('index.html', form=form, posts=posts, current_time=datetime.utcnow(),
-                           pagination=pagination, Permission=Permission, show_followed=show_followed)
 
 
 @main.route('/follow/<username>')
@@ -307,6 +287,37 @@ def server_shutdown():
         abort(500)
     shutdown()
     return 'Shutting down....'
+
+@main.route('/<int:id>', methods=['GET', 'POST'])
+def delete(id):
+    post = Post.query.get_or_404(id)
+    if current_user != post.author and \
+            not current_user.can(Permission.ADMINISTER):
+        abort(403)
+    db.session.delete(post)
+    db.session.commit()
+    form = MainForm()
+
+    show_followed = False
+    if current_user.is_authenticated:
+        show_followed = bool(request.cookies.get('show_followed', ''))
+    if show_followed:
+        query = Post.query
+        posts = query.all()
+        return render_template('index.html', form=form, posts=posts, current_time=datetime.utcnow(),
+                               pagination=None, Permission=Permission, show_followed=show_followed)
+
+    else:
+        query = Post.query.filter_by(author_id=current_user.id)
+        page = request.args.get('page', 1, type=int)
+        pagination = query.order_by(Post.timestamp.desc()).paginate(
+            page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
+            error_out=False
+        )
+        # posts = Post.query.order_by(Post.timestamp.desc()).all()
+        posts = pagination.items
+        return render_template('index.html', form=form, posts=posts, current_time=datetime.utcnow(),
+                               pagination=pagination, Permission=Permission, show_followed=show_followed)
 
 
 

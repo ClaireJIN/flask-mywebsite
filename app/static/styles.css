@@ -1,3 +1,17 @@
+#mainform{overflow:hidden}
+ul.posts {
+    width: 200px;
+    float: left;
+    height: 500px;
+    overflow-y: auto;
+}
+ul.mainposts {
+    margin-left: 230px;
+    margin-top: 30px;
+}
+#digest_date{
+    font-size: 0.8em
+}
 .profile-thumbnail {
     position: absolute;
 }
@@ -35,7 +49,7 @@ div.post-thumbnail {
     position: absolute;
 }
 div.post-content {
-    margin-left: 48px;
+    /*margin-left: 48px;*/
     min-height: 48px;
 }
 div.post-footer {
@@ -93,6 +107,19 @@ div.flask-pagedown-preview h2 {
 div.flask-pagedown-preview h3 {
     font-size: 120%;
 }
+/*.mui-ellipsis-3 {
+     display: -webkit-box;
+     overflow: hidden;
+     white-space: normal!important;
+     text-overflow: ellipsis;
+     word-wrap: break-word;
+     -webkit-line-clamp: 3;
+     -webkit-box-orient: vertical;
+}
+.post-body {
+    text-indent: 1rem;
+    line-height: 0.8rem;
+}*/
 .post-body h1 {
     font-size: 140%;
 }

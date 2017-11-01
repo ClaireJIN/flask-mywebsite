@@ -42,13 +42,15 @@ class EditProfileAdminForm(FlaskForm):
             raise ValidationError('Username already in use')
 
 class PostForm(FlaskForm):
+    digest_body = PageDownField("Write a digest", validators=[required()])
     body = PageDownField("Waht's on your mind?", validators=[required()])
     submit = SubmitField('Submit')
 
 
 class CommentForm(FlaskForm):
-    body = StringField('', validators=[required()])
+    body = PageDownField('', validators=[required()])
     submit = SubmitField('Submit')
+
 
 class MainForm(FlaskForm):
     pass

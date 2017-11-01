@@ -23,13 +23,8 @@
 </div>
 <div class="post-tabs">
     <ul class="nav nav-tabs">
-        <li{% if not show_followed %} class="active" {% endif %}><a href="{{ url_for('.show_all') }}">All</a></li>
-
-        {# note: if the blog has more users
-        {% if current_user.is_authenticated %}
-        <li{% if show_allowed %} class="active" {% endif %}><a href="{{ url_for('.show_followed')}}">Followers</a></li>
-        {% endif %}
-        #}
+        <li{% if not show_allowed %} class="active" {% endif %}><a href="{{ url_for('.show_followed')}}">Digests</a></li>
+        <li{% if show_followed %} class="active" {% endif %}><a href="{{ url_for('.show_all') }}">Posts</a></li>
 
     </ul>
 </div>

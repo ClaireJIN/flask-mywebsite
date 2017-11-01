@@ -9,7 +9,6 @@ from flask_login import UserMixin, AnonymousUserMixin
 from app.exceptions import ValidationError
 from . import db, login_manager
 
-
 class Permission:
     FOLLOW = 0x01
     COMMENT = 0x02
@@ -294,6 +293,7 @@ class Post(db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     comments = db.relationship('Comment', backref='post', lazy='dynamic')
+    digest_body = db.Column(db.Text)
 
     @staticmethod
     def generate_fake(count=100):
@@ -314,10 +314,17 @@ class Post(db.Model):
     def on_changed_body(target, value, oldvalue, initiator):
         allowed_tags = ['a', 'abbr', 'acronym', 'b', 'blockquote', 'code',
                         'em', 'i', 'li', 'ol', 'pre', 'strong', 'ul',
-                        'h1', 'h2', 'h3', 'p']
+                        'h1', 'h2', 'h3', 'p', 'img', 'br', '&lt;!--more--&gt;']
+        attrs = {
+            '*': ['class', 'style'],
+            'a': ['href', 'rel'],
+            'img': ['alt', 'src'],
+        }
+        styles = ['height', 'width']
         target.body_html = bleach.linkify(bleach.clean(
             markdown(value, output_format='html'),
-            tags=allowed_tags, strip=True))
+            tags=allowed_tags, attributes=attrs, styles=styles, strip=True))
+
 
     def to_json(self):
         json_post = {
@@ -340,9 +347,7 @@ class Post(db.Model):
             raise ValidationError('post does not have a body')
         return Post(body=body)
 
-
 db.event.listen(Post.body, 'set', Post.on_changed_body)
-
 
 class Comment(db.Model):
     __tablename__ = 'comments'
